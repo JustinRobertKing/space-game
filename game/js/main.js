@@ -3,6 +3,8 @@ console.log('fuck you')
 var game = new Phaser.Game(1440, 765, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 
 var space;
+var cursors;
+var ship;
 
 function preload() {
 
@@ -23,15 +25,19 @@ function create() {
     game.physics.startSystem(Phaser.Physics.ARCADE);
     //  A simple background for our game
     space = game.add.tileSprite(0, 0, 1440, 765, 'space2');
-    stars1 = game.add.tileSprite(0, 0, 1440, 765, 'stars1')
-    stars1Flipped = game.add.tileSprite(0, 0, 1440, 765, 'stars1Flipped')
-        // The ship and its settings
-    var ship = game.add.sprite(0, 330, 'ship1');
-    ship.scale.setTo(.5, .5)
-
+    stars1 = game.add.tileSprite(0, 0, 1440, 765, 'stars1');
+    stars1Flipped = game.add.tileSprite(0, 0, 1440, 765, 'stars1Flipped');
+    // Add the ship
+    ship = game.add.sprite(0, 330, 'ship1');
+    // Shrink it down
+    ship.scale.setTo(.5, .5);
     //  We need to enable physics on the ship
     game.physics.arcade.enable(ship);
 
+    ship.body.collideWorldBounds = true;
+
+    cursors = game.input.keyboard.createCursorKeys();
+    // game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.ENTER]);
 }
 
 function update() {
@@ -39,41 +45,18 @@ function update() {
     stars1.tilePosition.x -= 0.75;
     stars1Flipped.tilePosition.x -= 0.75;
 
-    // //  Collide the player and the stars with the platforms
-    // var hitPlatform = game.physics.arcade.collide(player, platforms);
-    // game.physics.arcade.collide(stars, platforms);
-
-    // //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
-    // game.physics.arcade.overlap(player, stars, collectStar, null, this);
-
-    // //  Reset the players velocity (movement)
-    // player.body.velocity.x = 0;
-
-    // if (cursors.left.isDown)
-    // {
-    //     //  Move to the left
-    //     ship.body.velocity.x = -150;
-    //     ship.animations.play('left');
-    // }
-    // else if (cursors.right.isDown)
-    // {
-    //     //  Move to the right
-    //     ship.body.velocity.x = 150;
-
-    //     ship.animations.play('right');
-    // }
-    // else
-    // {
-    //     //  Stand still
-    //     ship.animations.stop();
-
-    //     ship.frame = 4;
-    // }
+    // Stop the ship from moving
+    ship.body.velocity.x = 0
+    ship.body.velocity.y = 0
     
-    // //  Allow the ship to jump if they are touching the ground.
-    // if (cursors.up.isDown && ship.body.touching.down && hitPlatform)
-    // {
-    //     ship.body.velocity.y = -600;
-    // }
+   if(cursors.left.isDown){
+        ship.body.velocity.x = -300;
+    } else if(cursors.right.isDown){
+        ship.body.velocity.x = 300;
+    } if (cursors.up.isDown){
+        ship.body.velocity.y = -300;
+    } else if (cursors.down.isDown){
+        ship.body.velocity.y = 300;
+    }
 
 }
