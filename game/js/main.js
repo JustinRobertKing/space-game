@@ -1,12 +1,13 @@
 console.log('fuck you')
 
-var game = new Phaser.Game(1440, 765, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+var game = new Phaser.Game(1440, 765, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render});
 
 var space;
 var cursors;
 var ship;
 var aura;
 var explosion;
+var upgrade;
 var bluePlasma;
 var bluePlasmaReset = 0;
 var score = 0;
@@ -16,13 +17,15 @@ var scorePoints;
 var alienSpaceShips;
 var alienMediumShips;
 var alienCannons;
-// Individual members of the group
-
+// Initial health bars
+var alienSpaceShipsHealth = 300;
+var alienMediumShipsHealth = 1000;
+var alienCannonsHealth = 3000;
 
 function addGroup(newThing, amount, sprite) {
     newThing = game.add.group();
-    newThing.enableBody = true;
     newThing.physicsBodyType = Phaser.Physics.ARCADE;
+    newThing.enableBody = true;
     newThing.createMultiple(amount, sprite);
     newThing.setAll("outOfBoundsKill", true);
     newThing.setAll("checkWorldBounds", true);
@@ -53,6 +56,8 @@ function preload() {
     // Load effects images
     game.load.spritesheet('aura', 'img/Aura38.png', 128, 128)
     game.load.spritesheet('explosion', 'img/Explosion03.png', 128, 128)
+    // Load upgrade image
+    game.load.image('upgrade', 'img/spacestation.png')
 }
 
 function create() {
@@ -83,7 +88,8 @@ function create() {
     // Create effects
     aura = addGroup(aura, 2000, "aura")
     explosion = addGroup(explosion, 2000, "explosion")
-
+    // Create powerups
+    upgrade = addGroup(upgrade, 500, "upgrade")
 
     cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.ENTER]);
@@ -102,6 +108,9 @@ function update() {
     space.tilePosition.x -= 0.6;
     stars1.tilePosition.x -= 0.75;
     stars1Flipped.tilePosition.x -= 0.75;
+
+    // Rotate powerups
+    // upgrade.angle += 1
 
     // Check for collision deaths
     game.physics.arcade.overlap(ship, alienSpaceShips, gameOver, null, this);
@@ -143,6 +152,7 @@ function spawnSmallEnemies() {
     alienSpaceShip.reset(game.width + alienSpaceShip.width, game.rnd.frac() * 700);
     alienSpaceShip.scale.setTo(.2, .2);
     alienSpaceShip.anchor.setTo(.5)
+    alienSpaceShip.life = alienSpaceShipsHealth
     alienSpaceShip.body.velocity.x = -300
     alienSpaceShip.body.velocity.y = (.5 - Math.random()) * 100 
     // var trail = aura.getFirstExists(false)
@@ -165,6 +175,7 @@ function spawnMediumEnemies() {
     alienMediumShip.reset(game.width + alienMediumShip.width, game.rnd.frac() * 700);
     alienMediumShip.scale.setTo(.5, .5);
     alienMediumShip.anchor.setTo(.5);
+    alienMediumShip.life = alienMediumShipsHealth
     alienMediumShip.body.velocity.x = -150;
     alienMediumShip.body.velocity.y = (.5 - Math.random()) * 100;
 }
@@ -174,6 +185,7 @@ function spawnCannonEnemies() {
     var alienCannon = alienCannons.getFirstExists(false)
     alienCannon.reset(game.width + alienCannon.width, game.rnd.frac() * 700);
     alienCannon.anchor.setTo(.5)
+    alienCannon.life = alienCannonsHealth
     alienCannon.body.velocity.x = -75
     alienCannon.body.velocity.y = (.5 - Math.random()) * 100
 }
@@ -208,32 +220,45 @@ function damageSmallShips(bluePls, alienSpaceShip) {
         11, 12, 13, 14, 15, 16], 45, false);
     dmg.animations.play('dmg');
     dmg.anchor.setTo(.5);
-    // alienSpaceShip.life
     bluePls.kill();
-    score +=100;
-    alienSpaceShip.kill();
+    alienSpaceShip.life -= 100
+    if (alienSpaceShip.life <= 0) {
+        score += 100
+        alienSpaceShip.kill();
+    }
 } 
 
 function damageMediumShips(bluePls, alienMediumShip) {
     var dmg = explosion.getFirstExists(false);
-    dmg.reset(alienMediumShip.x - 40, alienMediumShip.y);
-    // dmg.scale.setTo(.75, .75)
+    dmg.reset(bluePls.x + 40, bluePls.y);
+    dmg.scale.setTo(.75, .75)
     dmg.animations.add('dmg', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
         11, 12, 13, 14, 15, 16], 45, false);
     dmg.animations.play('dmg');
     dmg.anchor.setTo(.5);
-    bluePls.kill()
+    bluePls.kill();
+    alienMediumShip.life -= 100
+    if (alienMediumShip.life <= 0) {
+        score += 1000
+        alienMediumShip.kill();
+        dropPowerUp(alienMediumShip)
+    }
 }
 
 function damageCannons(bluePls, alienCannon) {
     var dmg = explosion.getFirstExists(false);
-    dmg.reset(alienCannon.x - 40, alienCannon.y);
+    dmg.reset(bluePls.x + 60, bluePls.y);
     dmg.scale.setTo(1.2, 1.2)
     dmg.animations.add('dmg', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
         11, 12, 13, 14, 15, 16], 45, false);
     dmg.animations.play('dmg');
     dmg.anchor.setTo(.5);
     bluePls.kill()
+    alienCannon.life -= 100
+    if (alienCannon.life <= 0) {
+        score += 10000
+        alienCannon.kill();
+    }
 }
 
 function gameOver(ship, enemy) {
@@ -243,6 +268,15 @@ function gameOver(ship, enemy) {
     yourScoreText.text = score;
 } 
 
-function render() {
+function dropPowerUp(alienMediumShip) {
+    var pUp = upgrade.getFirstExists(false);
+    pUp.reset(alienMediumShip.x, alienMediumShip.y);
+    // pUp.scale.setTo(.15, .15);
+    pUp.anchor.setTo(.5);
+    pUp.body.velocity.x = -100
+    pUp.body.velocity.y = (.5 - Math.random()) * 100
+}
 
+function render() {
+    game.debug.body(upgrade);
 }
