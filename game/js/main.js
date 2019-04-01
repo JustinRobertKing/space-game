@@ -54,14 +54,14 @@ function create() {
     stars1 = game.add.tileSprite(0, 0, 1440, 765, 'stars1');
     stars1Flipped = game.add.tileSprite(0, 0, 1440, 765, 'stars1Flipped');
     // Add the ship
-    ship = game.add.sprite(20, game.world.centerY, 'ship1');
+    ship = game.add.sprite(100, game.world.centerY, 'ship1');
+    //  We need to enable physics on the ship
+    game.physics.arcade.enable(ship);
+    ship.enableBody = true
     // Shrink it down
     ship.scale.setTo(.4, .4);
     ship.anchor.setTo(.5);
-    // ship.body.width = ship.body.width * .75
-    // ship.body.height = ship.body.height *.75
-    //  We need to enable physics on the ship
-    game.physics.arcade.enable(ship);
+    ship.body.setSize(20, 20, 0, 0)
 
     ship.body.collideWorldBounds = true;
 
@@ -69,7 +69,7 @@ function create() {
     alienSpaceShips = addGroup(alienSpaceShips, 2000, "alienSpaceShip");
     alienMediumShips = addGroup(alienMediumShips, 1000, "alienMediumShip")
     alienCannons = addGroup(alienCannons, 500, "alienCannon")
-    bluePlasma = addGroup(bluePlasma, 100, 'bluePlasma')
+    bluePlasma = addGroup(bluePlasma, 1000, 'bluePlasma')
 
     cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.ENTER]);
@@ -164,6 +164,10 @@ function gameOver(ship, enemy) {
     game.time.events.remove(scorePoints);
     scoreText.text = "";
     yourScoreText.text = score;
+} 
+
+function render() {
+
 }
 
 
