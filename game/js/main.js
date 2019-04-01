@@ -14,6 +14,7 @@ var game = new Phaser.Game(1440, 765, Phaser.AUTO, '', { preload: preload, creat
 var space;
 var cursors;
 var ship;
+var bluePlasma;
 var score = 0;
 var scoreText; 
 var yourScoreText
@@ -42,6 +43,7 @@ function preload() {
     game.load.image('alienMediumShip', 'img/aliensprite.png');
     game.load.image('alienCannon', 'img/F5S3.png')
     // Load projectile images
+    game.load.spritesheet('bluePlasma', 'img/bluePlasma.png', 256, 300)
 }
 
 function create() {
@@ -52,9 +54,12 @@ function create() {
     stars1 = game.add.tileSprite(0, 0, 1440, 765, 'stars1');
     stars1Flipped = game.add.tileSprite(0, 0, 1440, 765, 'stars1Flipped');
     // Add the ship
-    ship = game.add.sprite(0, 325, 'ship1');
+    ship = game.add.sprite(20, game.world.centerY, 'ship1');
     // Shrink it down
-    ship.scale.setTo(.5, .5);
+    ship.scale.setTo(.4, .4);
+    ship.anchor.setTo(.5);
+    // ship.body.width = ship.body.width * .75
+    // ship.body.height = ship.body.height *.75
     //  We need to enable physics on the ship
     game.physics.arcade.enable(ship);
 
@@ -64,6 +69,7 @@ function create() {
     alienSpaceShips = addGroup(alienSpaceShips, 2000, "alienSpaceShip");
     alienMediumShips = addGroup(alienMediumShips, 1000, "alienMediumShip")
     alienCannons = addGroup(alienCannons, 500, "alienCannon")
+    bluePlasma = addGroup(bluePlasma, 100, 'bluePlasma')
 
     cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.ENTER]);
@@ -100,6 +106,10 @@ function update() {
     } else if (cursors.down.isDown){
         ship.body.velocity.y = 300;
     }
+
+    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
+        shootWeapon();
+    }
 }
 
 function scorePoints() {
@@ -133,12 +143,30 @@ function spawnCannonEnemies() {
     alienCannon.body.velocity.y = (.5 - Math.random()) * 100 
 }
 
+function shootWeapon() {
+    var bluePls = bluePlasma.getFirstExists(false)
+    bluePls.reset(ship.x + 20, ship.y + 28)
+    bluePls.angle = -90
+    bluePls.scale.setTo(.2, .2)
+    bluePls.animations.add('shoot', 
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
+        11, 12, 13, 14, 15, 16, 17, 18, 19, 
+        20, 21, ,22, 23, 24, 25, 26, 27, 28, 29, 
+        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 
+        41, 42, 43, 44, 45, 46, 47, 48], 
+        20, true);
+    bluePls.animations.play('shoot')
+    bluePls.body.velocity.x = 600
+}
+
 function gameOver(ship, enemy) {
     ship.kill();
     game.time.events.remove(scorePoints);
     scoreText.text = "";
     yourScoreText.text = score;
 }
+
+
     // alienSpaceShip = game.add.sprite(game.width, game.rnd.frac() * 700, 'alienSpaceShip');
     // alienSpaceShip.scale.setTo(.2, .2);
     // game.physics.arcade.enable(alienSpaceShip);
