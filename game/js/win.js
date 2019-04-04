@@ -12,10 +12,9 @@ var winState = {
 	    highScoreList.anchor.setTo(.5);
 	    highScoreList.setShadow(5, 5, 'rgba(0,0,0,.7)', 5);
 
-	    // restartText = game.add.text(game.world.centerX, 700, "PRESS \"SPACE\" TO TRY AGAIN", { font: '40px Arial' , fill: 'hotpink' });	  
-	    // restartText.anchor.setTo(.5);
-	    // restartText.setShadow(5, 5, 'rgba(0,0,0,.7)', 5);
-
+	    restartText = game.add.text(game.world.centerX, 700, "PRESS \"SPACE\" TO TRY AGAIN", { font: '40px Arial' , fill: 'hotpink' });	  
+	    restartText.anchor.setTo(.5);
+	    restartText.setShadow(5, 5, 'rgba(0,0,0,.7)', 5);
 
 	    function displayHighScores() {
 	    	var scores = getHighScores();
@@ -26,8 +25,8 @@ var winState = {
 		}
 		displayHighScores()
 
-		// var spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-  //   	spaceBar.onDown.addOnce(this.restart, this)
+		var spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+    	spaceBar.onDown.addOnce(this.restart, this)
 	},
 	update: function() {
 		space.tilePosition.x -= 0.6;

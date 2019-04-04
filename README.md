@@ -76,7 +76,7 @@ The final piece of implementation was adding a high scores list with local stora
 
 ## Known bugs
 
-The only known issue at this point is that I cannot switch back to the 'play' game state from the high scores page. I have currently disabled the listener that would attempt this, as it will freeze the game. At this point, to play again, you must refresh the browser. Not ideal.
+none at the moment
 
 ## Further goals
 

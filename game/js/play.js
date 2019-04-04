@@ -1,52 +1,3 @@
-var space;
-var cursors;
-var ship;
-var ship2s;
-var ship3s;
-var ship4s;
-var aura;
-var explosion;
-var upgrade;
-var bluePlasma;
-var orbs;
-var orbsReset = 0;
-var enemyBluePlasma;
-var bluePlasmaReset = 0;
-var gun2s;
-var gun2sReset = 0
-var gun3s;
-var gun3sReset = 0;
-var gun4s;
-var gun4sReset = 0
-var enemyBluePlasmaReset = 0;
-var currentWeapon = "plasma"
-var score = 0;
-var scoreText; 
-var yourScoreText
-var scorePoints;
-var alienSpaceShips;
-var alienMediumShips;
-var alienCannons;
-var shipUpgrade;
-var smallSpawnTimer;
-var mediumSpawnTimer;
-var cannonSpawnTimer;
-var smallInterval = .7;
-var mediumInterval = 3.8;
-var cannonInterval = 12;
-var increaseWave;
-var wave = 1;
-var waveText
-var music;
-var comet;
-var cometReset = 0
-// Initial health bars
-var alienSpaceShipsHealth = 300;
-var alienMediumShipsHealth = 700;
-var alienCannonsHealth = 1500;
-var shipAlive = true;
-var endTimer;
-
 var playState = {
 	init: function() {
 		getHighScores()
@@ -87,6 +38,7 @@ var playState = {
 	            sprite.kill()
 	        })
 	    })
+
 	    // Create powerups
 	    upgrade = addGroup(5, "upgrade")
 	    ship2s = addGroup(200, "ship2")
@@ -118,14 +70,11 @@ var playState = {
 	    scoreText = game.add.text(game.width - 200, 16, 'SCORE: 0', { fontSize: '32px Arial', fill: 'hotpink' });
 
 	    // Timers
-	    scorePoints = game.time.events.loop(Phaser.Timer.SECOND * .1, scorePoints, this);
+	    scorePoints = game.time.events.loop(Phaser.Timer.SECOND * .1, timedPoints, this);
 	    smallSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * smallInterval, spawnSmallEnemies, this)
 	    mediumSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * mediumInterval, spawnMediumEnemies, this)
 	    cannonSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * cannonInterval, spawnCannonEnemies, this)
 	    increaseWave = game.time.events.loop(Phaser.Timer.MINUTE * .25, updateTimers, this)
-	},
-	playMusic: function() {
-		music.play('', 0, 1, true)
 	},
 	update: function() {
 		space.tilePosition.x -= 0.6;
@@ -246,10 +195,10 @@ function addGroup(amount, sprite) {
     return newThing;
 }
 
-function scorePoints() {
+function timedPoints() {
     score += 1;
-    scoreText.text = 'SCORE: ' + score;
-    scoreText.setShadow(3, 3, 'rgba(0,0,0,.7)', 5);
+  	scoreText.text = 'SCORE: ' + score;
+   	scoreText.setShadow(3, 3, 'rgba(0,0,0,.7)', 5);
 }
 
 function spawnSmallEnemies() {
@@ -561,6 +510,11 @@ function gameOver(ship, enemy) {
 	pressSpaceText.setShadow(5, 5, 'rgba(0,0,0,.7)', 5);
 	var spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
     spaceBar.onDown.addOnce(endGame, this)
+    game.time.events.remove(scorePoints)
+    game.time.events.remove(increaseWave)
+    game.time.events.remove(smallSpawnTimer)
+    game.time.events.remove(mediumSpawnTimer)
+    game.time.events.remove(cannonSpawnTimer)
 } 
 
 function getHighScores(){
