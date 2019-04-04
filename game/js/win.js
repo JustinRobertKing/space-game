@@ -24,10 +24,10 @@ var winState = {
 				highScoreList.text = highScoreList.text + "\n" + entry;
 		    }
 		}
-		var spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-    	spaceBar.onDown.addOnce(this.restart, this)
-
 		displayHighScores()
+
+		// var spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+  //   	spaceBar.onDown.addOnce(this.restart, this)
 	},
 	update: function() {
 		space.tilePosition.x -= 0.6;

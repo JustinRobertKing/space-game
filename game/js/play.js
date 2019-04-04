@@ -58,14 +58,13 @@ var playState = {
 	    stars1Flipped = game.add.tileSprite(0, 0, 1440, 765, 'stars1Flipped');
 		// Add the ship
 	    ship = game.add.sprite(100, game.world.centerY, 'ship1');
-	    //  We need to enable physics on the ship
+	    //  Enable physics on the ship
 	    game.physics.arcade.enable(ship);
 	    ship.enableBody = true
 	    // Shrink it down
 	    ship.scale.setTo(.4, .4);
 	    ship.anchor.setTo(.5);
 	    ship.body.setSize(20, 20, 0, 0)
-
 	    ship.body.collideWorldBounds = true;
 
 	    // Create enemy ships
@@ -80,7 +79,6 @@ var playState = {
 	    enemyBluePlasma = addGroup(400, "bluePlasma")
 	    orbs = addGroup(200, "orbs")
 	    // Create effects
-	    // aura = addGroup(500, "aura")
 	    explosion = addGroup(1000, "explosion")
 	    explosion.forEach(dmg => {
 	        var anim = dmg.animations.add('dmg', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
@@ -101,7 +99,6 @@ var playState = {
 		music.onStop.add(function() {
 	 		music.play();
 	 	}, this);
-		music.onLoop.add(this.playMusic, this);
 	    comet = game.add.audio("comet", .5, false)
 	    photon = game.add.audio("photon", .2, false)
 	    flame = game.add.audio('flame', 2, false)
@@ -112,15 +109,15 @@ var playState = {
 	    hit = game.add.audio('hit', .1, false)
 	    disc = game.add.audio('disc', .65, false)
 
+	    // Activate keys
 	    cursors = game.input.keyboard.createCursorKeys();
 	    this.keyboard = game.input.keyboard
 	    game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.ENTER]);
 
+	    // Score text
 	    scoreText = game.add.text(game.width - 200, 16, 'SCORE: 0', { fontSize: '32px Arial', fill: 'hotpink' });
-	    // yourScoreText = game.add.text(game.world.centerX, game.world.centerY, "", { font: '300px Arial' , fill: 'hotpink' });
-	    // yourScoreText.anchor.setTo(.5);
 
-
+	    // Timers
 	    scorePoints = game.time.events.loop(Phaser.Timer.SECOND * .1, scorePoints, this);
 	    smallSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * smallInterval, spawnSmallEnemies, this)
 	    mediumSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * mediumInterval, spawnMediumEnemies, this)
@@ -172,7 +169,6 @@ var playState = {
 	    game.physics.arcade.overlap(ship4s, enemyBluePlasma, downGradeShip, null, this);
 	    game.physics.arcade.overlap(ship4s, orbs, downGradeShip, null, this);
 
-
 	    // Check for weapon hits
 	    game.physics.arcade.overlap(bluePlasma, alienSpaceShips, damageSmallShips, null, this);
 	    game.physics.arcade.overlap(bluePlasma, alienMediumShips, damageMediumShips, null, this);
@@ -196,6 +192,7 @@ var playState = {
 	    // Stop the ship from moving
 	    ship.body.velocity.x = 0
 	    ship.body.velocity.y = 0
+	    
 	    // WASD
 	    if (this.keyboard.isDown(Phaser.Keyboard.A)) {
 	        ship.body.velocity.x = -300;
@@ -256,7 +253,7 @@ function scorePoints() {
 }
 
 function spawnSmallEnemies() {
-     // Create small enemy ships
+    // Create small enemy ships
     var alienSpaceShip = alienSpaceShips.getFirstExists(false)
     alienSpaceShip.reset(game.width + alienSpaceShip.width, game.rnd.frac() * 700);
     alienSpaceShip.scale.setTo(.2, .2);
@@ -264,22 +261,10 @@ function spawnSmallEnemies() {
     alienSpaceShip.life = alienSpaceShipsHealth
     alienSpaceShip.body.velocity.x = -300
     alienSpaceShip.body.velocity.y = (.5 - Math.random()) * 100 
-    // var trail = aura.getFirstExists(false)
-    // trail.reset(alienSpaceShip.x + 30, alienSpaceShip.y)
-    // trail.angle = +90
-    // trail.scale.setTo(.3, .3)
-    // trail.animations.add('trail', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
-    //     11, 12, 13, 14, 15, 16, 17, 18, 19, 
-    //     20, 21, ,22, 23, 24, 25, 26, 27, 28, 29, 
-    //     30, 31, 32], 60, true);
-    // trail.animations.play('trail')
-    // trail.anchor.setTo(.5)
-    // trail.body.velocity.x = -300
-    // trail.body.velocity.y = alienSpaceShip.body.velocity.y
 }
 
 function spawnMediumEnemies() {
-     // Create small enemy ships
+    // Create small enemy ships
     var alienMediumShip = alienMediumShips.getFirstExists(false)
     alienMediumShip.reset(game.width + alienMediumShip.width, game.rnd.frac() * 700);
     alienMediumShip.scale.setTo(.5, .5);
@@ -291,7 +276,7 @@ function spawnMediumEnemies() {
 }
 
 function spawnCannonEnemies() {
-     // Create small enemy ships
+    // Create small enemy ships
     var alienCannon = alienCannons.getFirstExists(false)
     alienCannon.reset(game.width + alienCannon.width, game.rnd.frac() * 700);
     alienCannon.anchor.setTo(.5)
@@ -399,7 +384,6 @@ function shootWeapon() {
             return;
         }
         gun3.reset(ship.x + 120, ship.y)
-        // gun3.angle = -90
         gun3.scale.setTo(.3, .3 )
         gun3.animations.add('shoot', 
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], 
@@ -528,9 +512,9 @@ function collectPowerUp(ship, upgrade) {
     upgrade.kill()
     if(shipUpgrade){
         shipUpgrade.kill()
-    //     // ship2s.addChild(shipUpgrade)
-    //     ship3s.addChild(shipUpgrade)
-    //     // ship4s.addChild(shipUpgrade)
+        // ship2s.addChild(shipUpgrade)
+        // ship3s.addChild(shipUpgrade)
+        // ship4s.addChild(shipUpgrade)
     }
     var chance = Math.ceil(Math.random() * 3)
     let offset = 120
@@ -572,6 +556,9 @@ function gameOver(ship, enemy) {
     yourScoreText = game.add.text(game.world.centerX, game.world.centerY, "YOU ARE DEAD", { font: '175px Arial' , fill: 'hotpink' });
 	yourScoreText.anchor.setTo(.5);
 	yourScoreText.setShadow(5, 5, 'rgba(0,0,0,.7)', 5);
+	pressSpaceText = game.add.text(game.world.centerX, 700, "PRESS \"SPACE\"", { font: '40px Arial' , fill: 'hotpink' });	  
+	pressSpaceText.anchor.setTo(.5);
+	pressSpaceText.setShadow(5, 5, 'rgba(0,0,0,.7)', 5);
 	var spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
     spaceBar.onDown.addOnce(endGame, this)
 } 
@@ -597,35 +584,35 @@ function addNewHighScore(name, allScores){
 function endGame() {
 	var scores = getHighScores();
     if(scores.length < 5 || scores[4].score < score){
-      //Add initials prompt
-      swal({
-        title: "YOU DON'T SUCK",
-        text: "ENTER YOUR INITIALS:",
-        type: "input",
-        showCancelButton: true,
-        closeOnConfirm: false,
-        inputPlaceholder: "ABC"
-      },
-      function(name){
-        if (!name) return false;
+      	// Sweet Alert prompt
+      	swal({
+        	title: "YOU DON'T SUCK",
+        	text: "ENTER YOUR INITIALS:",
+        	type: "input",
+        	showCancelButton: false,
+        	closeOnConfirm: false,
+        	inputPlaceholder: "ABC"
+      	},
+      	function(name) {
+        	if (!name) return false;
   
-        if (name.length < 3 || name.length > 3) {
-          swal.showInputError("MUST BE 3 CHARACTERS");
-          return false;
+        	if (name.length < 3 || name.length > 3) {
+          		swal.showInputError("MUST BE 3 CHARACTERS");
+          		return false;
         }
         addNewHighScore(name, scores);
         swal({
-          title: "I EXPECTED MORE FROM YOU",
-          text: "HIGH SCORES ARE COOL THOUGH",
-          type: "warning",
-          showCancelButton: false,
-          confirmButtonText: "SUBMIT",
-          closeOnConfirm: true
+          	title: "I EXPECTED MORE FROM YOU",
+          	text: "HIGH SCORES ARE COOL THOUGH",
+          	type: "warning",
+          	showCancelButton: false,
+          	confirmButtonText: "SUBMIT",
+          	closeOnConfirm: true
         },
         function(){
-          game.state.start('win');
+          	game.state.start('win');
         });
-      });
+    });
     } else {
 		game.state.start('win');
     }
