@@ -1,5 +1,3 @@
-console.log('fuck you')
-
 var game = new Phaser.Game(1440, 765, Phaser.AUTO, '', { preload: preload, create: create, update: update});
 
 var space;
@@ -32,10 +30,23 @@ var alienSpaceShips;
 var alienMediumShips;
 var alienCannons;
 var shipUpgrade;
+var smallSpawnTimer;
+var mediumSpawnTimer;
+var cannonSpawnTimer;
+var smallInterval = .7;
+var mediumInterval = 3.8;
+var cannonInterval = 12;
+var increaseWave;
+var wave = 1;
+var waveText
+var music;
+var comet;
+var cometReset = 0
 // Initial health bars
 var alienSpaceShipsHealth = 300;
 var alienMediumShipsHealth = 700;
 var alienCannonsHealth = 1500;
+var shipAlive = true;
 
 function addGroup(amount, sprite) {
     var newThing = game.add.group();
@@ -77,6 +88,17 @@ function preload() {
     game.load.spritesheet('explosion', 'img/Explosion03.png', 128, 128)
     // Load upgrade image
     game.load.image('upgrade', 'img/spacestation.png')
+    // Load audio
+    game.load.audio('music', 'audio/Sci-fiPulseLoop.wav')
+    game.load.audio('comet', 'audio/Grenade4.mp3')
+    game.load.audio('photon', 'audio/Photon.wav')
+    game.load.audio('laser', 'audio/laser.mp3')
+    game.load.audio('hose', 'audio/hoseloop.mp3')
+    game.load.audio('powerup', 'audio/powerup.mp3')
+    game.load.audio('flame', 'audio/flame.wav')
+    game.load.audio('end', 'audio/gameover.wav')
+    game.load.audio('hit', 'audio/hit.wav')
+    game.load.audio('disc', 'audio/orb.wav')
 }
 
 function create() {
@@ -111,7 +133,7 @@ function create() {
     orbs = addGroup(200, "orbs")
     // Create effects
     // aura = addGroup(500, "aura")
-    explosion = addGroup(200, "explosion")
+    explosion = addGroup(1000, "explosion")
     explosion.forEach(dmg => {
         var anim = dmg.animations.add('dmg', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
         11, 12, 13, 14, 15, 16], 45, false);
@@ -126,6 +148,18 @@ function create() {
     ship3s = addGroup(200, "ship3")
     ship4s = addGroup(200, "ship4")
 
+    // Add music & sounds
+    music = new Phaser.Sound(game, "music", 1, true)
+    comet = game.add.audio("comet", .5, false)
+    photon = game.add.audio("photon", .2, false)
+    flame = game.add.audio('flame', 2, false)
+    laser = game.add.audio("laser", .3, false)
+    hose = game.add.audio("hose", .1, false)
+    powerUp = game.add.audio("powerup", .6, false)
+    end = game.add.audio('end', .5, false)
+    hit = game.add.audio('hit', .1, false)
+    disc = game.add.audio('disc', .65, false)
+
     cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR, Phaser.Keyboard.ENTER]);
 
@@ -133,10 +167,26 @@ function create() {
     yourScoreText = game.add.text(game.world.centerX, game.world.centerY, "", { font: '300px Arial' , fill: 'hotpink' });
     yourScoreText.anchor.setTo(.5);
 
-    scorePoints = game.time.events.loop(Phaser.Timer.SECOND * .01, scorePoints, this);
-    game.time.events.loop(Phaser.Timer.SECOND * .5, spawnSmallEnemies, this)
-    game.time.events.loop(Phaser.Timer.SECOND * 2, spawnMediumEnemies, this)
-    game.time.events.loop(Phaser.Timer.SECOND * 6, spawnCannonEnemies, this)
+    scorePoints = game.time.events.loop(Phaser.Timer.SECOND * .1, scorePoints, this);
+    smallSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * smallInterval, spawnSmallEnemies, this)
+    mediumSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * mediumInterval, spawnMediumEnemies, this)
+    cannonSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * cannonInterval, spawnCannonEnemies, this)
+    increaseWave = game.time.events.loop(Phaser.Timer.MINUTE * .25, updateTimers, this)
+}
+
+function updateTimers() {
+    if (smallInterval <= .05) {
+        return;
+    }
+    game.time.events.remove(smallSpawnTimer)
+    game.time.events.remove(mediumSpawnTimer)
+    game.time.events.remove(cannonSpawnTimer)
+    smallInterval -= .05
+    mediumSpawnTimer -= .2
+    cannonSpawnTimer -= .75
+    smallSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * smallInterval, spawnSmallEnemies, this)
+    mediumSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * mediumInterval, spawnMediumEnemies, this)
+    cannonSpawnTimer = game.time.events.loop(Phaser.Timer.SECOND * cannonInterval, spawnCannonEnemies, this)
 }
 
 function update() {
@@ -150,10 +200,10 @@ function update() {
     alienMediumShips.forEachAlive(function(alienMediumShip) {
         fireOrbs(alienMediumShip);
     })
-    // Fire lasers when cannons reach a certain x point
+    // Fire cannons when cannons reach a certain x point
     alienCannons.forEachAlive(function(alienCannon) {
         if (alienCannon.x <= 1300) {
-            fireLaser(alienCannon)
+            fireCannon(alienCannon)
         }
     })
     // Check for collision deaths
@@ -163,23 +213,23 @@ function update() {
     game.physics.arcade.overlap(ship, enemyBluePlasma, gameOver, null, this);
     game.physics.arcade.overlap(ship, orbs, gameOver, null, this);
     // Check for upgraded ship parts collisions
-    game.physics.arcade.overlap(ship2s, alienSpaceShips, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship2s, alienMediumShips, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship2s, alienCannons, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship2s, enemyBluePlasma, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship2s, orbs, downgradeShip, null, this);
+    game.physics.arcade.overlap(ship2s, alienSpaceShips, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship2s, alienMediumShips, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship2s, alienCannons, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship2s, enemyBluePlasma, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship2s, orbs, downGradeShip, null, this);
     
-    game.physics.arcade.overlap(ship3s, alienSpaceShips, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship3s, alienMediumShips, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship3s, alienCannons, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship3s, enemyBluePlasma, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship3s, orbs, downgradeShip, null, this);
+    game.physics.arcade.overlap(ship3s, alienSpaceShips, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship3s, alienMediumShips, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship3s, alienCannons, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship3s, enemyBluePlasma, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship3s, orbs, downGradeShip, null, this);
     
-    game.physics.arcade.overlap(ship4s, alienSpaceShips, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship4s, alienMediumShips, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship4s, alienCannons, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship4s, enemyBluePlasma, downgradeShip, null, this);
-    game.physics.arcade.overlap(ship4s, orbs, downgradeShip, null, this);
+    game.physics.arcade.overlap(ship4s, alienSpaceShips, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship4s, alienMediumShips, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship4s, alienCannons, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship4s, enemyBluePlasma, downGradeShip, null, this);
+    game.physics.arcade.overlap(ship4s, orbs, downGradeShip, null, this);
 
 
     // Check for weapon hits
@@ -272,9 +322,12 @@ function spawnCannonEnemies() {
     alienCannon.body.velocity.y = 0
 }
 
-function fireLaser(alienCannon) {
+function fireCannon(alienCannon) {
     if (game.time.now < enemyBluePlasmaReset) {
         return;
+    }
+    if (game.time.now > cometReset) {
+        comet.play()
     }
     var enemyBluePls = enemyBluePlasma.getFirstExists(false);
     enemyBluePls.reset(alienCannon.x - 40, alienCannon.y)
@@ -293,6 +346,7 @@ function fireLaser(alienCannon) {
     enemyBluePls.animations.play('shoot')
     enemyBluePls.body.velocity.x = -3000
     enemyBluePlasmaReset = game.time.now + 20
+    cometReset = game.time.now + 2000
 }
 
 function fireOrbs(alienMediumShip) {
@@ -310,9 +364,13 @@ function fireOrbs(alienMediumShip) {
     orb.animations.play('shoot')
     orb.body.velocity.x = -800
     orbsReset = game.time.now + 800
+    disc.play()
 }
 
 function shootWeapon() {
+    if (!shipAlive) {
+        return;
+    }
     if (currentWeapon === "plasma") {
         var bluePls = bluePlasma.getFirstExists(false)
         if (game.time.now < bluePlasmaReset) {
@@ -333,6 +391,7 @@ function shootWeapon() {
         bluePls.body.setSize(5, 5, 0, 0)
         bluePls.body.velocity.x = 600
         bluePlasmaReset = game.time.now + 200
+        photon.play()
     } else if (currentWeapon === "gun2") {
         var gun2 = gun2s.getFirstExists(false)
         if (game.time.now < gun2sReset) {
@@ -352,7 +411,9 @@ function shootWeapon() {
         gun2.anchor.setTo(.5)
         gun2.body.setSize(5, 5, 0, 0)
         gun2.body.velocity.x = 1000
-        gun2sReset = game.time.now + 200
+        gun2.body.velocity.y = (.5 - Math.random()) * 200
+        gun2sReset = game.time.now + 150
+        flame.play()
     } else if (currentWeapon === "gun3") {
         var gun3 = gun3s.getFirstExists(false)
         if (game.time.now < gun3sReset) {
@@ -368,13 +429,14 @@ function shootWeapon() {
         gun3.anchor.setTo(.5)
         gun3.body.setSize(5, 5, 0, 0)
         gun3.body.velocity.x = 1500
-        gun3sReset = game.time.now + 750
+        gun3sReset = game.time.now + 500
+        laser.play()
     } else if (currentWeapon === "gun4") {
         var gun4 = gun4s.getFirstExists(false)
         if (game.time.now < gun4sReset) {
             return;
         }
-        gun4.reset(ship.x + 60, ship.y)
+        gun4.reset(ship.x + 80, ship.y)
         gun4.angle = -90
         gun4.scale.setTo(.3, .3)
         gun4.animations.add('shoot', 
@@ -389,6 +451,7 @@ function shootWeapon() {
         gun4.body.setSize(5, 5, 0, 0)
         gun4.body.velocity.x = 600
         gun4sReset = game.time.now + 10
+        hose.play()
     }
 } 
 
@@ -404,16 +467,17 @@ function damageSmallShips(projectile, alienSpaceShip) {
     if (currentWeapon === "plasma") {
         alienSpaceShip.life -= 100
     } else if (currentWeapon === "gun2") {
-        alienSpaceShip.life -= 200
+        alienSpaceShip.life -= 150
     } else if (currentWeapon === "gun3") {
         alienSpaceShip.life -= 600
     } else if (currentWeapon === "gun4") {
-        alienSpaceShip.life -= 15
+        alienSpaceShip.life -= 7
     }
     if (alienSpaceShip.life <= 0) {
         score += 100
         alienSpaceShip.kill();
     }
+    hit.play()
 } 
 
 function damageMediumShips(projectile, alienMediumShip) {
@@ -426,11 +490,11 @@ function damageMediumShips(projectile, alienMediumShip) {
     if (currentWeapon === "plasma") {
         alienMediumShip.life -= 100
     } else if (currentWeapon === "gun2"){
-        alienMediumShip.life -= 200
+        alienMediumShip.life -= 150
     } else if (currentWeapon === "gun3") {
         alienMediumShip.life -= 600
     } else if (currentWeapon === "gun4") {
-        alienMediumShip.life -= 15
+        alienMediumShip.life -= 7
     }
     if (alienMediumShip.life <= 0) {
         dmg.reset(alienMediumShip.x, alienMediumShip.y);
@@ -440,6 +504,7 @@ function damageMediumShips(projectile, alienMediumShip) {
         dropPowerUp(alienMediumShip);
         alienMediumShip.kill();
     } 
+    hit.play()
 }
 
 function damageCannons(projectile, alienCannon) {
@@ -452,11 +517,11 @@ function damageCannons(projectile, alienCannon) {
     if (currentWeapon === "plasma") {
         alienCannon.life -= 100
     } else if (currentWeapon === "gun2"){
-        alienCannon.life -= 200
+        alienCannon.life -= 150
     } else if (currentWeapon === "gun3") {
         alienCannon.life -= 600
     } else if (currentWeapon === "gun4") {
-        alienCannon.life -= 15
+        alienCannon.life -= 7
     }
     if (alienCannon.life <= 0) {
         dmg.reset(alienCannon.x, alienCannon.y)
@@ -465,6 +530,7 @@ function damageCannons(projectile, alienCannon) {
         score += 5000
         alienCannon.kill();
     }
+    hit.play()
 }
 
 function gameOver(ship, enemy) {
@@ -477,17 +543,19 @@ function gameOver(ship, enemy) {
     game.time.events.remove(scorePoints);
     scoreText.text = "";
     yourScoreText.text = score;
+    end.play()
+    shipAlive = false
 } 
 
 function dropPowerUp(alienMediumShip) {
-    var chance = Math.ceil(Math.random() * 3)
+    var chance = Math.ceil(Math.random() * 2)
     if (chance === 1) {
         var pUp = upgrade.getFirstExists(false);
         pUp.reset(alienMediumShip.x, alienMediumShip.y);
         pUp.scale.setTo(.75, .75);
         pUp.anchor.setTo(.5);
         pUp.body.velocity.x = -150
-        pUp.body.velocity.y = (.5 - Math.random()) * 200
+        pUp.body.velocity.y = (.5 - Math.random()) * 100
     }
 }
 
@@ -500,7 +568,6 @@ function collectPowerUp(ship, upgrade) {
     //     ship3s.addChild(shipUpgrade)
     //     // ship4s.addChild(shipUpgrade)
     }
-    
     var chance = Math.ceil(Math.random() * 3)
     let offset = 120
     if (chance === 1) {
@@ -518,8 +585,12 @@ function collectPowerUp(ship, upgrade) {
     shipUpgrade.body.setSize(20, 20, 0, 0)
     ship.addChild(shipUpgrade)
     shipUpgrade.reset(offset, 0);
+    score += 2000;
+    powerUp.play()
 }
 
-function downgradeShip(shipPart) {
+function downGradeShip(shipPart, projectile) {
     shipPart.kill()
+    projectile.kill()
+    currentWeapon = "plasma"
 }
