@@ -3,6 +3,13 @@ var playState = {
 		getHighScores()
 	},
 	create: function() {
+		currentWeapon = "plasma"
+		smallInterval = .7;
+		mediumInterval = 3.8;
+		cannonInterval = 12;
+		if(shipUpgrade){
+        	shipUpgrade.kill()
+        }
 		shipAlive = true
 		score = 0
 		//  Create a parallax background
