@@ -3,6 +3,7 @@ var playState = {
 		getHighScores()
 	},
 	create: function() {
+		score = 0
 		//  Create a parallax background
 	    space = game.add.tileSprite(0, 0, 1440, 765, 'space2');
 	    stars1 = game.add.tileSprite(0, 0, 1440, 765, 'stars1');
